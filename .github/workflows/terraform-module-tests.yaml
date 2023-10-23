@@ -95,6 +95,103 @@ jobs:
 
       # download `run-tests.sh` script dynamically from this repository
       - name: Run tests
+name: Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      ARM_CLIENT_ID:
+        description: "Service Principal application id"
+        required: true
+        type: string
+      ARM_SUBSCRIPTION_ID:
+        description: "Subscription Id"
+        required: true
+        type: string
+      ARM_TENANT_ID:
+        description: "Tenant Id"
+        required: false
+        type: string
+      TEST_NAME_PATTERN:
+        description: 'Only tests whose name matches this glob pattern are run.'
+        default: '*'
+        required: false
+        type: string
+      CALLED_REF:
+        description: ''
+        required: true
+        type: string
+      RESOURCE_GROUP_TO_CLEAN:
+        description: ''
+        default: ''
+        required: false
+        type: string
+      SKIP_DESTROY:
+        description: ''
+        default: 'n'
+        type: string
+      SHOW_OUTPUT:
+        description: ''
+        default: 'y'
+        type: string
+    secrets:
+      ARM_CLIENT_SECRET:
+        description: ""
+        required: true
+
+jobs:
+
+  tests:
+    name: Run Terraform module integration Tests
+    runs-on: ubuntu-latest
+    # no environment needed for basic tests
+
+    env:
+      ARM_CLIENT_ID: ${{ inputs.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ inputs.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ inputs.ARM_TENANT_ID }}
+      TEST_NAME_PATTERN: ${{ inputs.TEST_NAME_PATTERN }}
+      CALLED_REF: ${{ inputs.CALLED_REF }}
+      RESOURCE_GROUP_TO_CLEAN: ${{ inputs.RESOURCE_GROUP_TO_CLEAN }}
+      SKIP_DESTROY: ${{ inputs.SKIP_DESTROY }}
+      SHOW_OUTPUT: ${{ inputs.SHOW_OUTPUT }}
+
+    steps:
+
+      - uses: actions/checkout@v3
+      
+      # Node is needed in order for 'terraform_wrapper: true' to work with 'Setup Terraform' step
+      - name: Setup Node
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version: '18'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_wrapper: true
+      
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      
+      # Login via Azure CLI since there are bash scripts that run 'az' commands
+      - name: Azure CLI Login
+        run: |
+          az login --service-principal -u ${{ env.ARM_CLIENT_ID }} -p ${{ env.ARM_CLIENT_SECRET }} --tenant ${{ env.ARM_TENANT_ID }}
+          az account set -s ${{ env.ARM_SUBSCRIPTION_ID }}
+
+      # download `run-tests.sh` script dynamically from this repository
+      - name: Run tests
         run: |
           # download script
           curl -L -o run-tests.sh https://oauth2:${{ secrets.GITHUB_TOKEN }}@raw.github.com/brianwagner777/${{ env.CALLED_REF }}/run-tests.sh
@@ -119,10 +216,10 @@ jobs:
 
           # run tests
           bash run-tests.sh --name-pattern '${{ env.TEST_NAME_PATTERN }}' $clean_rg_opt $skip_destroy_opt $show_output_opt
-
-			- name: Azure CLI Logout
-				if: always()
-				run: |
-					az cache purge
-					az account clear
+	  
+      - name: Azure CLI Logout
+ 	if: always()
+	run: |
+	  az cache purge
+  	  az account clear
      
