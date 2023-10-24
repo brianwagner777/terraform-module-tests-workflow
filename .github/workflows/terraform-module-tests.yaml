@@ -93,6 +93,12 @@ jobs:
           az login --service-principal -u ${{ env.ARM_CLIENT_ID }} -p ${{ env.ARM_CLIENT_SECRET }} --tenant ${{ env.ARM_TENANT_ID }}
           az account set -s ${{ env.ARM_SUBSCRIPTION_ID }}
 
+      - name: Checkout reusable workflow dir
+        uses: actions/checkout@v3
+        with:
+          repository: brianwagner777/terraform-module-tests-workflow
+          path: reusable-workflow-repo
+
       - name: Run tests
         run: |
           echo "Got Here"
