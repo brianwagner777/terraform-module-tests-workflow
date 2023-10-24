@@ -127,7 +127,7 @@ jobs:
             show_output_opt="--show-output"
           fi
           # run tests
-          bash run-tests.sh --name-pattern '${{ env.TEST_NAME_PATTERN }}' $clean_rg_opt $skip_destroy_opt $show_output_opt
+          bash ./reusable-workflow-repo/run-tests.sh --name-pattern '${{ env.TEST_NAME_PATTERN }}' $clean_rg_opt $skip_destroy_opt $show_output_opt
 
       - name: Azure CLI Logout
         if: always()
