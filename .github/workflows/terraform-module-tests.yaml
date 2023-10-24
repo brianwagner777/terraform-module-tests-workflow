@@ -98,6 +98,8 @@ jobs:
           echo "Got Here"
           # download script
           # curl -L -o run-tests.sh https://oauth2:${{ secrets.GITHUB_TOKEN }}@raw.github.com/brianwagner777/tests-module-workflow/${{ env.CALLED_REF }}/run-tests.sh
+          dir
+          ls
           curl -L -o run-tests.sh https://github.com/brianwagner777/terraform-module-tests-workflow/run-tests.sh
           
           # clean resource group option
