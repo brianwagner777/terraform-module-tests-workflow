@@ -107,6 +107,7 @@ jobs:
           dir
           ls
           #curl -L -o run-tests.sh https://github.com/brianwagner777/terraform-module-tests-workflow/run-tests.sh
+          chmod +x ./reusable-workflow-repo/run-tests.sh
           ./reusable-workflow-repo/run-tests.sh
           echo "Got Here 2"
           
