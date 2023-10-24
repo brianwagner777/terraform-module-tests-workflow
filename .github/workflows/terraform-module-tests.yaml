@@ -92,3 +92,32 @@ jobs:
         run: |
           az login --service-principal -u ${{ env.ARM_CLIENT_ID }} -p ${{ env.ARM_CLIENT_SECRET }} --tenant ${{ env.ARM_TENANT_ID }}
           az account set -s ${{ env.ARM_SUBSCRIPTION_ID }}
+
+      - name: Run tests
+        run: |
+          # download script
+          curl -L -o run-tests.sh https://oauth2:${{ secrets.GITHUB_TOKEN }}@raw.github.com/brianwagner777/tests-module-workflow/${{ env.CALLED_REF }}/run-tests.sh
+          
+          # clean resource group option
+          clean_rg_opt=""
+          if [ -n "${{ env.RESOURCE_GROUP_TO_CLEAN }}" ] ; then
+            clean_rg_opt="--resource-group-name ${{ env.RESOURCE_GROUP_TO_CLEAN }}"
+          fi
+          # skip destroy option
+          skip_destroy_opt=""
+          if [ "${{ env.SKIP_DESTROY }}" = "y" ] ; then
+            skip_destroy_opt="--skip-destroy"
+          fi
+          # show all output option
+          show_output_opt=""
+          if [ "${{ env.SHOW_OUTPUT }}" = "y" ] ; then
+            show_output_opt="--show-output"
+          fi
+          # run tests
+          bash run-tests.sh --name-pattern '${{ env.TEST_NAME_PATTERN }}' $clean_rg_opt $skip_destroy_opt $show_output_opt
+
+      - name: Azure CLI Logout
+        if: always()
+        run: |
+          az cache purge
+          az account clear
